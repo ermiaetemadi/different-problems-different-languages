@@ -9,7 +9,7 @@ pub fn imgshow(array_in: &Array2D<u64>,x_range:(i32, i32), y_range:(i32, i32), t
 
     let out_file_path = String::from("outputs/img/") + out_file + &String::from(".png");
 
-    let root = BitMapBackend::new(&out_file_path, (1800, 1800)).into_drawing_area();
+    let root = BitMapBackend::new(&out_file_path, (4000, 4000)).into_drawing_area();
 
     root.fill(&WHITE)?;
 

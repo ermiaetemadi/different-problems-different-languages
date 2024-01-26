@@ -5,6 +5,7 @@
 use array2d::Array2D;       // For fast 2D arrays
 use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;   // Fast seedable rng
+use std::cmp;
 // use rayon::prelude::*;      // Rayon parallelization crate
 
 
@@ -151,7 +152,7 @@ impl Grid {
         self.percolated = Some(is_percolated);
     }
 
-    pub fn hk_coloring(&mut self, full_coloring:bool){     // Coloring algorithm
+    pub fn hk_coloring(&mut self, full_coloring:bool){     // HK Coloring algorithm
         
         for i in 0..self.size {
             
@@ -173,18 +174,13 @@ impl Grid {
             }
         }
 
-        println!("This is labels : {:?}", self.l_array);
 
         if full_coloring {
 
             for i in 0..self.size {
                 for j in 0..self.size {
-                    let mut label = self.l_array[self.colors[(i, j)] as usize];
-                    while self.l_array[label] != label {
-
-                        label = self.l_array[label];
-                    }
-                    self.colors[(i, j)] =  label as u64;
+                    
+                    self.colors[(i, j)] =  self.hk_find(self.colors[(i, j)] as usize) as u64;
                 }
             }
         }
@@ -192,34 +188,40 @@ impl Grid {
 
     pub fn hk_check_around(&mut self, i:usize, j:usize, m_color: u64) -> bool{     // Looks around in the coloring algorithm and changes colors, returns true if did
 
-        // We associate labels insted of colors 
+        // We associate labels and root labels instead of colors 
         let left_nigh = self.l_array[self.colors[(i, j - 1)] as usize];
         let up_nigh = self.l_array[if i != 0 {self.colors[(i - 1, j)]} else {0} as usize];
+        let left_nigh_label = self.hk_find(left_nigh);
+        let up_nigh_label = self.hk_find(up_nigh);
         let mut changed = false;
 
-        if up_nigh !=0 {
+        if up_nigh_label !=0 {
 
-            if left_nigh !=0 && left_nigh != up_nigh {
+            if left_nigh_label !=0 && left_nigh_label != up_nigh_label {
 
-                self.colors[(i, j)] = left_nigh as u64;
-                self.l_array[up_nigh] = left_nigh;
-                self.s_array[left_nigh] += self.s_array[up_nigh] + 1;
-                self.s_array[up_nigh] = 0;
+                let root_label = cmp::min(left_nigh_label, up_nigh_label);
+                let sub_label = cmp::max(left_nigh_label, up_nigh_label);
+                self.colors[(i, j)] = root_label as u64;
+
+                // Let's destroy the sub one!
+                self.hk_union(root_label, sub_label);
+                self.s_array[root_label] += self.s_array[sub_label] + 1;
+                self.s_array[sub_label] = 0;
                 
             }
             else{
 
-                self.colors[(i, j)] = up_nigh as u64;
-                self.s_array[up_nigh] += 1;
+                self.colors[(i, j)] = up_nigh_label as u64;
+                self.s_array[up_nigh_label] += 1;
             }
             
             changed = true;
 
         } 
-        else if left_nigh !=0 {
+        else if left_nigh_label !=0 {
 
-            self.colors[(i, j)] = left_nigh as u64;
-            self.s_array[left_nigh] += 1;
+            self.colors[(i, j)] = left_nigh_label as u64;
+            self.s_array[left_nigh_label] += 1;
             changed = true;
         }
         else {
@@ -232,6 +234,20 @@ impl Grid {
 
     }
 
+    fn hk_find(&mut self, label:usize) -> usize{
 
+        let mut new_label =  label;
+
+        while self.l_array[new_label] != new_label {
+            new_label = self.l_array[new_label];
+        }
+
+        return new_label;
+    }
     
+    fn hk_union(&mut self, root_label:usize, sub_label:usize){
+
+        self.l_array[sub_label] = root_label;
+    }
+
 }

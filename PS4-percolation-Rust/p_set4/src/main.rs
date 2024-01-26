@@ -125,6 +125,11 @@ pub fn p3_run(size:usize, p:f64, bench: bool){
         None => println!("you haven't checked the percolation yet, idiot!")
         
     }
+
+    // println!("Grid l_array: {:?}", my_grid.l_array);
+
+    // println!("Grid s_array: {:?}", my_grid.s_array);
+
     
 
 }
